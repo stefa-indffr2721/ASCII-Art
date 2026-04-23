@@ -9,13 +9,6 @@ from file_writer import FileWriter
 
 CHARSET = " .+*=#@"
 
-
-def check(parser, parm1, parm2=None):
-    if parm1 is None and parm2 is None:
-        parser.print_help()
-        sys.exit(1)
-
-
 def get_args():
     parser = argparse.ArgumentParser(prog="ASCII-Art")
     parser.add_argument("-i", "--input", type=str, default=None, help="входное изображение")
@@ -26,8 +19,9 @@ def get_args():
 
     args = parser.parse_args()
 
-    check(parser, args.input)
-    check(parser, args.wight, args.height)
+    if args.set == "":
+        parser.print_help()
+        sys.exit(1)
 
     try:
         f = open(args.input)
@@ -48,17 +42,26 @@ def cout(image, path):
         writer.write(image)
 
 
+def get_charset(args):
+    if not args.set is None:
+        with open(args.set) as f:
+            charset = f.readline().replace("\n", "")
+            if len(charset) == 0:
+                print("файл указанный как charset - пуст")
+                sys.exit(1)
+    else:
+        charset = CHARSET
+
+    return charset
+
+
 def main():
     args = get_args()
 
     image = handling.prepare(args.input, args.wight, args.height)  # вернёт чб 2d массив пикселей
 
     # перевод в ASCII-Art
-    if not args.set is None:
-        with open(args.set) as f:
-            charset = f.readline().replace("\n", "")
-    else:
-        charset = CHARSET
+    charset = get_charset(args)
 
     image_ASCII = converter.convert(image, charset)
 
