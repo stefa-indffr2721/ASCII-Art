@@ -1,61 +1,71 @@
+#python main.py -i 3.png -w 100 -H 50 -s char.txt -o result.txt
 import sys
 import argparse
 
 import handling
 import converter
 import console_writer
+from file_writer import FileWriter
 
 CHARSET = " .+*=#@"
 
-def check(parser, parm1, parm2=None):
-    if parm1 == None and parm2 == None:
-        parser.print_help()
-        sys.exit(1)
-
-def main():
+def get_args():
     parser = argparse.ArgumentParser(prog="ASCII-Art")
     parser.add_argument("-i", "--input", type=str, default=None, help="входное изображение")
     parser.add_argument("-w", "--wight",  type=int, default=None, help="ширина выходного изображения (в символах)")
     parser.add_argument("-H", "--height",  type=int, default=None, help="высота выходного изображения (в символах)")
     parser.add_argument("-s", "--set",  type=str, default=None, help="множество символов (файл)")
-    parser.add_argument("-o", "--output", type=str, default=None, help="путь к выходному файлу")
+    parser.add_argument("-o", "--output", type=str, default=None, help="путь к выходному файлу, если не указано - то на консоль")
 
     args = parser.parse_args()
 
-    # проверка
-    check(parser, args.input)
-    check(parser, args.wight, args.height)
+    if args.set == "":
+        parser.print_help()
+        sys.exit(1)
 
-    # предобработка
     try:
         f = open(args.input)
         f.close()
     except FileNotFoundError:
-        # parser.print_help()
-        print("файл не найден")
-        return
+        print("указанный входной файл не найден")
+        sys.exit(1)
+
+    return args
 
 
-    image = args.input  # путь
-
-    image = handling.prepare(image, args.wight, args.height)    # чб массив пикселей
-
-    # перевод в ASCII-Art
-    if args.set != None:
-        charset = open(args.set).readline().replace("\n", "")
-    else:
-        charset = CHARSET
-
-    image = converter.convert(image, charset)   # результат
-
-
-    if args.output != None:
-        print("out to file")
-        # writer = console_writer.file_writer(args.output)
-        # writer.write(image)
+def cout(image, path):
+    if path is not None:
+        writer = FileWriter(path)
+        writer.write(image)
     else:
         writer = console_writer.ConsoleWriter()
         writer.write(image)
+
+
+def get_charset(args):
+    if not args.set is None:
+        with open(args.set) as f:
+            charset = f.readline().replace("\n", "")
+            if len(charset) == 0:
+                print("файл указанный как charset - пуст")
+                sys.exit(1)
+    else:
+        charset = CHARSET
+
+    return charset
+
+
+def main():
+    args = get_args()
+
+    image = handling.prepare(args.input, args.wight, args.height)  # вернёт чб 2d массив пикселей
+
+    # перевод в ASCII-Art
+    charset = get_charset(args)
+
+    image_ASCII = converter.convert(image, charset)
+
+    cout(image_ASCII, args.output)
 
 
 if __name__ == "__main__":

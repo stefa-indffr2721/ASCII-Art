@@ -1,23 +1,7 @@
-from PIL import Image
+import png_opener
 
-def gray_scale(pixels_2d):
-    gray_2d = []
-
-    for row in pixels_2d:
-        gray_row = []
-        for (r, g, b) in row:
-            gray = int(0.299 * r + 0.587 * g + 0.114 * b)
-            gray_row.append(gray)
-        gray_2d.append(gray_row)
-
-    return gray_2d
-
-
-def prepare(image, width, height):
-    img = Image.open(image).convert("RGB") # либо работать с одним форматом
-    pixels = list(img.getdata())
-
-    width_fact, height_fact = img.size
+def prepare(path_to_image, width, height):
+    (pixels, width_fact, height_fact) = png_opener.read_png(path_to_image)
 
     # превращаем в 2D массив
     pixels_2d = []
@@ -27,5 +11,26 @@ def prepare(image, width, height):
         row = pixels[start:end]
         pixels_2d.append(row)
 
-    pixels_2d = gray_scale(pixels_2d)
+    pixels_2d = resize(pixels_2d, width_fact, height_fact, width, height)
+
     return pixels_2d
+
+
+def resize(pixels_2d, width_fact, height_fact, width, height):
+    if width is None and height is None:
+        return pixels_2d
+
+    if width is None:
+        width = round(height * width_fact / height_fact)
+    if height is None:
+        height = round(width * height_fact / width_fact)
+
+    result = []
+    for y in range(height):
+        src_y = int(y / height * height_fact)
+        row = []
+        for x in range(width):
+            src_x = int(x / width * width_fact)
+            row.append(pixels_2d[src_y][src_x])
+        result.append(row)
+    return result
