@@ -160,14 +160,15 @@ def read_png(path):
     while i < len(flat_pixels):
         if color_type == 0: # уже серый
             gray = flat_pixels[i]
+            r, g, b = gray, gray, gray
 
-        elif color_type == 2: # rgb -> gray
+        elif color_type == 2: # rgb
             r = flat_pixels[i]
             g = flat_pixels[i + 1]
             b = flat_pixels[i + 2]
             gray = grayscale(r, g, b)
 
-        elif color_type == 3: # индекс в палитре -> rgb -> gray
+        elif color_type == 3: # индекс в палитре -> rgb
             index = flat_pixels[i]
             r, g, b = palette[index]
             gray = grayscale(r, g, b)
@@ -176,16 +177,20 @@ def read_png(path):
             gray_value = flat_pixels[i]
             alpha = flat_pixels[i + 1]
             gray = round(gray_value * alpha / 255)
+            r, g, b = gray, gray, gray
 
-        elif color_type == 6: # rgb + прозрачность -> сначала в серый, потом учитываем прозрачность
+        elif color_type == 6: # rgb + прозрачность
             r = flat_pixels[i]
             g = flat_pixels[i + 1]
             b = flat_pixels[i + 2]
             alpha = flat_pixels[i + 3]
             gray_value = grayscale(r, g, b)
             gray = round(gray_value * alpha / 255)
+            r = round(r * alpha / 255)
+            g = round(g * alpha / 255)
+            b = round(b * alpha / 255)
 
-        pixels.append(gray)
+        pixels.append((gray, r, g, b))
         i += bytes_per_pixel
 
     return pixels, width, height

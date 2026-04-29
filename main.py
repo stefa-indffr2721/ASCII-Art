@@ -1,21 +1,26 @@
 #python main.py -i 3.png -w 100 -H 50 -s char.txt -o result.txt
 import sys
 import argparse
+import time
 
 import handling
 import converter
 import console_writer
 from file_writer import FileWriter
+from ansi_writer import AnsiWriter
+import video_reader
 
 CHARSET = " .+*=#@"
 
 def get_args():
     parser = argparse.ArgumentParser(prog="ASCII-Art")
-    parser.add_argument("-i", "--input", type=str, default=None, help="входное изображение")
+    parser.add_argument("-i", "--input", type=str, default=None, help="входное изображение или видео")
     parser.add_argument("-w", "--wight",  type=int, default=None, help="ширина выходного изображения (в символах)")
     parser.add_argument("-H", "--height",  type=int, default=None, help="высота выходного изображения (в символах)")
     parser.add_argument("-s", "--set",  type=str, default=None, help="множество символов (файл)")
     parser.add_argument("-o", "--output", type=str, default=None, help="путь к выходному файлу, если не указано - то на консоль")
+    parser.add_argument("-a", "--ansi", action="store_true", help="цветной вывод в терминал (ANSI)")
+    parser.add_argument("-v", "--video", action="store_true", help="режим видео")
 
     args = parser.parse_args()
 
@@ -33,8 +38,11 @@ def get_args():
     return args
 
 
-def cout(image, path):
-    if path is not None:
+def cout(image, path, ansi):
+    if ansi:
+        writer = AnsiWriter()
+        writer.write(image)
+    elif path is not None:
         writer = FileWriter(path)
         writer.write(image)
     else:
@@ -55,17 +63,45 @@ def get_charset(args):
     return charset
 
 
+def play_video(args, charset):
+    KADR = 1
+    print("Читаем видео")
+    frames, fps = video_reader.read_video(args.input, KADR)
+
+    delay = 1.0 / fps * KADR
+
+    print("Обработка кадров")
+    processed_frames = []
+    for frame_path in frames:
+        image = handling.prepare(frame_path, args.wight, args.height)
+        image_ascii = converter.convert(image, charset)
+        processed_frames.append(image_ascii)
+
+    video_reader.delete_temp(frames)
+
+    print("ПОЕХАЛИИИИИИИ!!!!!")
+    time.sleep(1)
+
+    writer = AnsiWriter()
+    for frame in processed_frames:
+        print("\033[H\033[J", end="")
+        print("\033[" + str(len(frame)) + "A", end="")
+        writer.write(frame)
+        time.sleep(delay)
+
+    print("\033[H\033[J", end="")
+
+
 def main():
     args = get_args()
-
-    image = handling.prepare(args.input, args.wight, args.height)  # вернёт чб 2d массив пикселей
-
-    # перевод в ASCII-Art
     charset = get_charset(args)
 
-    image_ASCII = converter.convert(image, charset)
-
-    cout(image_ASCII, args.output)
+    if args.video:
+        play_video(args, charset)
+    else:
+        image = handling.prepare(args.input, args.wight, args.height)
+        image_ASCII = converter.convert(image, charset)
+        cout(image_ASCII, args.output, args.ansi)
 
 
 if __name__ == "__main__":

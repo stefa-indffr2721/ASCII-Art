@@ -1,0 +1,14 @@
+from abstract_writer import AbstractWriter
+
+class AnsiWriter(AbstractWriter):
+    def write(self, ascii_2d):
+        for row in ascii_2d:
+            line = ""
+            prev_r, prev_g, prev_b = -1, -1, -1
+            for (char, r, g, b) in row:
+                if r != prev_r or g != prev_g or b != prev_b:
+                    line = line + "\033[38;2;" + str(r) + ";" + str(g) + ";" + str(b) + "m"
+                    prev_r, prev_g, prev_b = r, g, b
+                line = line + char * 2
+            line = line + "\033[0m"
+            print(line)
