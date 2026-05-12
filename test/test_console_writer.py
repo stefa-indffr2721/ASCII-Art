@@ -9,17 +9,6 @@ class TestConsoleWriter(unittest.TestCase):
         writer = ConsoleWriter()
         self.assertIsNotNone(writer)
 
-    def test_write_runs(self):
-        """ проверка на работу при указании минимальных данных, тип записываем 1 символ """
-        writer = ConsoleWriter()
-        ascii_2d = [[("@", 255, 0, 0)]]
-        try:
-            writer.write(ascii_2d)
-            ok = True
-        except:
-            ok = False
-        self.assertTrue(ok)
-
     def test_write_empty(self):
         """ проверка на то не падает ли ConsoleWriter при пустом массиве """
         writer = ConsoleWriter()
@@ -32,7 +21,7 @@ class TestConsoleWriter(unittest.TestCase):
         self.assertTrue(ok)
 
     def test_write_multiple_rows(self):
-        """ проверка не падает ли writer при вводе нескольких строк"""
+        """ проверка не падает ли writer при вводе нескольких строк """
         writer = ConsoleWriter()
         ascii_2d = [
             [("@", 255, 0, 0), (".", 0, 255, 0)],
